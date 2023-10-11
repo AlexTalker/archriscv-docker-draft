@@ -2,7 +2,7 @@ name: Build & deploy Docker
 on: [ workflow_dispatch ]
 
 env:
-  RELEASE: 20220727
+  RELEASE: 2023-10-09
 
 jobs:
   rootfs-image:
