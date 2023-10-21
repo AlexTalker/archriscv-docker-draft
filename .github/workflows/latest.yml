@@ -1,5 +1,16 @@
 name: Build & deploy latest Docker image
 on:
+  # GitHub Actions doesn't support YAML anchors, hence duplication
+  workflow_call:
+    inputs:
+      release:
+        description: 'Tarball release date'
+        type: string
+        default: '2023-10-09'
+      image:
+        description: 'Image name'
+        type: string
+        default: 'archriscv'
   workflow_dispatch:
     inputs:
       release:
