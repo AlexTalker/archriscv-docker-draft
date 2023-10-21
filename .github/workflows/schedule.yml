@@ -1,0 +1,17 @@
+name: Scheduled images update
+on:
+  workflow_dispatch:
+
+jobs:
+  rollout-images:
+    name: Determine latest version
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Determine latest tarball
+        run: |
+          pip install beautifulsoup4
+          curl -L 'https://archriscv.felixc.at/images/' | python tools/scrapper.py
