@@ -40,7 +40,7 @@ jobs:
           || (echo "present=0" >> "$GITHUB_OUTPUT")
 
   trigger-release:
-    if: ${{ needs.image-exists.outputs.present == "0" }}
+    if: ${{ needs.image-exists.outputs.present == '0' }}
     needs:
       - compute-version
       - image-exists
