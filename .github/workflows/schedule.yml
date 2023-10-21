@@ -18,6 +18,7 @@ jobs:
         run: |
           pip install beautifulsoup4
           echo "release=$(curl -L 'https://archriscv.felixc.at/images/' | python tools/scrapper.py | sed -e 's/archriscv-//' -e 's/.tar.zst//')" >> "$GITHUB_OUTPUT"
+
   image-exists:
     name: Determine if release image was published earlier
     needs:
@@ -37,3 +38,21 @@ jobs:
           curl --silent -f -lSL https://hub.docker.com/v2/repositories/${{ env.IMAGE }}/tags/${{ env.RELEASE }} \
           && (echo "present=1" >> "$GITHUB_OUTPUT") \
           || (echo "present=0" >> "$GITHUB_OUTPUT")
+
+  trigger-release:
+    if: ${{ needs.image-exists.outputs.present == "0" }}
+    needs:
+      - compute-version
+      - image-exists
+    uses: ./.github/workflows/release.yml
+    with:
+      release: ${{ needs.compute-version.outputs.release }}
+
+  trigger-latest:
+    if: ${{ success() || ((needs.compute-version.result == 'success') && (needs.trigger-release.result == 'skipped' )) }}
+    needs:
+      - compute-version
+      - trigger-release
+    uses: ./.github/workflows/latest.yml
+    with:
+      release: ${{ needs.compute-version.outputs.release }}
