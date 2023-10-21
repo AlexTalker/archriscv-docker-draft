@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  rollout-images:
+  compute-version:
     name: Determine latest version
     runs-on: ubuntu-latest
     outputs:
@@ -18,3 +18,22 @@ jobs:
         run: |
           pip install beautifulsoup4
           echo "release=$(curl -L 'https://archriscv.felixc.at/images/' | python tools/scrapper.py | sed -e 's/archriscv-//' -e 's/.tar.zst//')" >> "$GITHUB_OUTPUT"
+  image-exists:
+    name: Determine if release image was published earlier
+    needs:
+      - compute-version
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ needs.compute-version.outputs.release }}
+      present: ${{ steps.docker-hub-image.outputs.present }}
+    steps:
+      -
+        id: docker-hub-image
+        name: Determine if release image was already published
+        env:
+          IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/archriscv
+          RELEASE: ${{ needs.compute-version.outputs.release }}
+        run: |
+          curl --silent -f -lSL https://hub.docker.com/v2/repositories/${{ env.IMAGE }}/tags/${{ env.RELEASE }} \
+          && (echo "present=1" >> "$GITHUB_OUTPUT") \
+          || (echo "present=0" >> "$GITHUB_OUTPUT")
