@@ -1,0 +1,46 @@
+name: Build & deploy release Docker image
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Tarball release date'
+        type: string
+        default: '2023-10-09'
+      image:
+        description: 'Image name'
+        type: string
+        default: 'archriscv'
+
+jobs:
+  rootfs-image:
+    name: Build the release docker image
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Checkout
+        uses: actions/checkout@v3
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      -
+        name: Download RootFS
+        run: make RELEASE=${{ inputs.release }} download
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      -
+        name: Build & publish Docker image
+        uses: docker/build-push-action@v3
+        with:
+          build-args: |
+            RELEASE=${{ inputs.release }}
+          context: .
+          platforms: linux/riscv64
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ inputs.image }}:${{ inputs.release }}
